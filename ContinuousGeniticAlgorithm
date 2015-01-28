@@ -1,0 +1,475 @@
+ 
+
+%---------------------Continuous Genetic algorithm-----------------------------
+
+%Steven Kinghorn
+
+%Biologically Inspired Methods
+
+%Assignment 2
+
+%------------------------------------------------------------------------------
+
+ 
+
+clear; 
+
+%Setting GA Parameters
+
+%---------------------------------------------------------------------------
+
+MaxGen=8;    %The maximum number of generations the GA will cycle through
+
+SelectionRate=0.5; %Number of chromosomes kept as parents
+
+PopulationSize=10; %Must be kept EVEN
+
+MutRate=0.2;    %Mutation rate
+
+ 
+
+nGene=2;    %Number of genes in each chromosome
+
+%PBitn=10;    %Number of bits within each gene (x and y)
+
+ 
+
+%TotnBits=PBitn*nGene;    %Total number of bits in a chromosome
+
+ 
+
+nKeep=floor(SelectionRate*PopulationSize);     %Number of chromosomes kept for mating
+
+ 
+
+OffSpringNo=(PopulationSize-nKeep);  %The number of offspring needed to refill the population to its original size
+
+%-------------------------------------------------------------------------------------------
+
+%Creating a contour plot
+
+    [x,y]=meshgrid(0:0.1:10,0:0.1:10);
+
+    z= x.*sin(4.*x)+(1.1).*y.*sin(2.*y);
+
+ %{
+
+    surfc(x,y,z,'EdgeColor','none');
+
+    figure(1), [C,h] = contourf(x,y,z);
+
+    colormap cool
+
+    colorbar;
+
+    title('A contour plot of the fitness landscape');
+
+ %}
+
+%--------------------------------------------------------------------------------------------
+
+%Creating the initial population using real numbers from 0-10. 
+
+    %GenCounter=0;    %Initialising generation counter
+
+    Xgene=10*rand(1,PopulationSize);
+
+    Ygene=10*rand(1,PopulationSize);
+
+ 
+
+%Calculating the cost of each chromosome using the cost function.
+
+%The cost function will calculate the cost at 10 random points (generated
+
+%by Xgene and Ygene.
+
+    cost=Xgene.*sin(4.*Xgene)+(1.1).*Ygene.*sin(2.*Ygene);
+
+ 
+
+%Plot these points on the contour map.
+
+% Countour plot Initial population
+
+    figure(1),[C,h] = contourf(x,y,z);
+
+    colormap Autumn
+
+    colorbar;
+
+    hold on;
+
+    plot(Xgene,Ygene,'*');
+
+    title('generation 0. Initial population')
+
+ 
+
+costChromId=vertcat(cost, 1:PopulationSize)';   %Generates a 2 column table with cost and population ID 
+
+ 
+
+%ordering the chromosomes by cost (lowest to highest)
+
+OrderedCosts=sortrows(costChromId);
+
+                                 
+
+    %Both the X and Y genes are concatanated into a single matrix.
+
+    initialPop=vertcat(Xgene,Ygene)';
+
+  
+
+    %--------------------------RankWeighting Selection---------------------------------
+
+    %Assigning probabilities to the chromosomes using Rank Weighting
+
+    n=1:nKeep;
+
+    Summation=sum(1:nKeep);
+
+    Pn=((nKeep-n+1)/Summation);   %This value is equivalent to a proportion of a roulette wheel
+
+                            %So it's more likely that a random number will
+
+                            %select a chromosome with a better fitness
+
+                            %value.
+
+    %Using a random number to select 2 parents. This selection process will
+
+    %repeat until two "Different" parents are selected.
+
+    CumulativeProbs=cumsum(Pn);  %
+
+    
+
+    
+
+%Generation loop
+
+GenCounter=0; 
+
+n=0;
+
+disp(['Generation: ',num2str(GenCounter)]);
+
+bestChrom=OrderedCosts(1,1); %Fittest Chromosome in the population
+
+averageValue=mean(OrderedCosts(:,1)); %Average chromosome fitness value
+
+ 
+
+%Matrices required to store the progress of the genetic algorithm 
+
+%as it passes each generation. 
+
+GenerationNo=1:MaxGen+1;
+
+BestCost=zeros(1,MaxGen+1);
+
+AveCost=zeros(1,MaxGen+1);
+
+ 
+
+%Storing average and best costs in initial population:
+
+BestCost(1,GenCounter+1)=bestChrom;
+
+AveCost(1,GenCounter+1)=averageValue;
+
+ 
+
+for GenCounter=1:MaxGen 
+
+ 
+
+BestCost(1,GenCounter+1)=bestChrom;
+
+AveCost(1,GenCounter+1)=averageValue;
+
+ 
+
+    %Display best chromosome fitness and average population fitness
+
+    disp('');
+
+    disp(['Generation: ',num2str(GenCounter)]);
+
+    disp(['Cost of fittest chromosome: ',num2str(bestChrom)]);
+
+    disp(['Average fitness of population: ',num2str(averageValue)]);
+
+    disp('');
+
+    %---------------------------Select Mates-------------------------------  
+
+    
+
+    counter=0;
+
+    while counter<(OffSpringNo+1)%This loop repeats until population is refilled
+
+              
+
+        %Select Father
+
+        FatherChrom=0;      %Stores the chromosome ID that will be the father
+
+        MotherChrom=0;      %Stores the chromosome ID that will be the mother
+
+        while (FatherChrom==MotherChrom);   %Will repeat until father and mother are different chromosomes
+
+            RandomN=rand(1);     %generates a random Number from 0-1
+
+            %Father chromosome
+
+                if RandomN<CumulativeProbs(1)
+
+                    FatherChrom=1;
+
+                end
+
+                for val=2:nKeep
+
+                    if RandomN>=CumulativeProbs(val-1)&&RandomN<CumulativeProbs(val)
+
+                        FatherChrom=val;
+
+                    end            
+
+                end
+
+ 
+
+            RandomN=rand(1);     %generates a random Number from 0-1
+
+            %Mother Chromosome
+
+                if RandomN<CumulativeProbs(1)
+
+                    MotherChrom=1;
+
+                end
+
+                for val=2:nKeep
+
+                    if RandomN>=CumulativeProbs(val-1)&&RandomN<CumulativeProbs(val)
+
+                        MotherChrom=val;
+
+                    end            
+
+                end
+
+        end
+
+ 
+
+         %repopulate with offspring    
+
+%FatherChrom;
+
+%MotherChrom;
+
+ 
+
+%-------------------------Mating---------------------------------------------------
+
+            %select random crossover point 
+
+            %rndcrossover=0;
+
+            %while (rndcrossover==0);
+
+                rndcrossover=ceil(2.*rand(1));
+
+            %end
+
+ 
+
+        %find father's chromosome
+
+        FChrom=initialPop(OrderedCosts(FatherChrom,2),:);
+
+        %find Mother's chromosome
+
+        MChrom=initialPop(OrderedCosts(MotherChrom,2),:);
+
+        
+
+        %Creating a random number between 0-1 for the mating process
+
+        beta=rand(1);
+
+        
+
+        %Selecting variables in the parents to be the crossover point
+
+        %and creating new variables for the offspring
+
+        Pnew1=MChrom(1,rndcrossover)-beta.*(MChrom(1,rndcrossover)-FChrom(1,rndcrossover));
+
+        Pnew2=FChrom(1,rndcrossover)+beta.*(MChrom(1,rndcrossover)-FChrom(1,rndcrossover));
+
+        
+
+        %Offspring created by overwriting Mother and father chromosomes with Pnew1 and Pnew2
+
+        %Apply crossover
+
+        if rndcrossover==2
+
+            MChrom(1,2)=Pnew1;
+
+            FChrom(1,2)=Pnew2;
+
+            OffSpring1=MChrom(1,:);
+
+            OffSpring2=FChrom(1,:);
+
+        end
+
+        if rndcrossover==1
+
+            MChrom(1,1)=Pnew1;
+
+            FChrom(1,1)=Pnew2;
+
+            MChrom(1,2)=FChrom(1,2);
+
+            FChrom(1,2)=MChrom(1,2);
+
+            OffSpring1=MChrom(1,:);
+
+            OffSpring2=FChrom(1,:);
+
+        end       
+
+               
+
+        %Replace Lower ranking chromosomes with new offspring
+
+        
+
+        initialPop(OrderedCosts((nKeep+(counter+1)),2),:)=OffSpring1;
+
+        counter=counter+1;
+
+        if counter==(OffSpringNo);
+
+            break;      %Breaks out of the while loop if the population has been refilled
+
+        end
+
+        initialPop(OrderedCosts((nKeep+(counter+1)),2),:)=OffSpring2;
+
+        counter=counter+1;  
+
+    end 
+
+ 
+
+ 
+
+ 
+
+    %---------------------Mutation------------------------------------------------------ 
+
+    NoToMutate=round(MutRate.*(PopulationSize-1).*nGene);    
+
+ 
+
+    %Creating random row and column numbers (locations to mutate values)
+
+    row=ceil(PopulationSize.*rand(1,NoToMutate));
+
+    column=ceil(nGene.*rand(1,NoToMutate));
+
+ 
+
+    %perform mutation on selected locations
+
+        initialPop(row,column)=10.*rand(1);        %replaces variable with a random No. between 0-10
+
+        
+
+ 
+
+ 
+
+    %---------------------Check for convergence----------------------------
+
+ 
+
+    %Calculating the cost of each chromosome using the cost function.
+
+    %The cost function will calculate the cost at 10 random points (generated
+
+    %by Xgene and Ygene.
+
+    
+
+    %Updating the cost function:
+
+    
+
+        cost=initialPop(:,1).*sin(4.*initialPop(:,1))+(1.1).*initialPop(:,2).*sin(2.*initialPop(:,2));
+
+ 
+
+    %Plot new points on the contour map.
+
+    % Countour plot Initial population
+
+    
+
+        figure(2), subplot(4,2,GenCounter), [C,h] = contourf(x,y,z);
+
+        colormap Autumn
+
+        colorbar;
+
+        hold on;
+
+        plot(initialPop(:,1),initialPop(:,2),'*');      %plots the x and y values
+
+        title(['RankWeighting Selection. Population size: ',num2str(PopulationSize),'. Mutation rate: ',num2str(MutRate),'. Generation: ',num2str(GenCounter),])
+
+ 
+
+    costChromId=vertcat(cost', 1:PopulationSize)';   %Generates a 2 column table with cost and population ID 
+
+    %ordering the chromosomes by cost (lowest to highest)
+
+    OrderedCosts=sortrows(costChromId);
+
+    bestChrom=OrderedCosts(1,1); %Fittest Chromosome in the population
+
+    averageValue=mean(OrderedCosts(:,1)); %Average chromosome fitness value
+
+ 
+
+end
+
+hold off;
+
+%Plotting the change in average and best fitnesses with increasing generation number.
+
+        figure(MaxGen+1);
+
+        plot(GenerationNo,BestCost,'-ro');
+
+        hold on;
+
+        plot (GenerationNo,AveCost,'-.b');
+
+        title(['Rank Weighting Selection. Average and best fitnesses with increasing generation number. Selection Rate: ',num2str(SelectionRate),]);
+
+        xlabel('Generation Number');
+
+        ylabel('Fitness')
+
+        legend('Best fitness value','Average fitness');
